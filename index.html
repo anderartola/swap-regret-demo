@@ -182,20 +182,6 @@
   The chart shows three curves. <strong style="font-weight:500; color:#534AB7;">EW external regret</strong> is what EW is designed to minimize. <strong style="font-weight:500; color:#7F77DD;">EW swap regret</strong> is the same play sequence judged by the stronger benchmark — what EW <em>doesn't</em> control. <strong style="font-weight:500; color:#0F6E56;">SDA swap regret</strong> is SDA's behavior under that stronger benchmark. The gap between the two purple lines is what swap regret penalizes that external regret ignores.
 </p>
 
-<h2>The thing to try</h2>
-<p>
-  Click the <em>Cycle through corners</em> button. This feeds 10 rounds of payoff (1, 0, 0), then 10 of (0, 1, 0), then 10 of (0, 0, 1). After 30 rounds, all three actions have identical cumulative payoff (= 10), so external regret is essentially zero — no single fixed action would have outperformed any other.
-</p>
-<p>
-  But EW's <em>swap</em> regret is high! Why? EW chases the leader: it plays action 1 heavily during rounds 1-10, action 2 during rounds 11-20, action 3 during rounds 21-30. Look at the swap "when I played action 1, swap it for action 2" — that swap would have been disastrous if applied to all of EW's history, but it's evaluated only on the rounds where EW played action 1 (i.e., the early rounds, where action 2 was useless). The bad swap is "when I played action 1, swap it for action 3" — because action 1 was played mostly in rounds 1-10 when action 3 had payoff 0, but the swap doesn't know that. Actually the painful swap here is more subtle: the best swap rerouting reveals that any action other than the one EW played in the moment would have done better <em>on average</em> over EW's actual play distribution, because EW's distribution at any moment is concentrated on the wrong action for that moment.
-</p>
-<p>
-  SDA's swap regret stays much lower because each of its experts is specifically trained on the slice of rounds where its action gets played. So expert 1 sees a fair representation of how the world looks when action 1 is being played.
-</p>
-<p>
-  The <em>Rock-paper-scissors</em> preset is normalized cycles of payoffs favoring different actions. Same separation, sometimes more dramatic.
-</p>
-
 <div class="footer">
   Companion to Hartline's review article <em>The Economics of No-Regret Learning Algorithms</em> (Section 4). The SDA construction is from Blum and Mansour (2007).
 </div>
