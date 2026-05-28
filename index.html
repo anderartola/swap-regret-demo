@@ -325,9 +325,7 @@
 <p>
   <strong style="font-weight:500;">SDA (Stationary Delegation Algorithm)</strong> runs k internal EW experts, one per action. Each round, expert a recommends a distribution α̃ₐ. SDA stacks these as rows of a row-stochastic matrix and plays the stationary distribution α of that matrix, satisfying α = α·Ã. Expert a then receives the scaled payoff vector αₐ·u. This guarantees vanishing <em>swap</em> regret: no rerouting a → f(a) of your own actions would have done much better.
 </p>
-<p>
-  Swap regret is strictly stronger than external regret in general — vanishing swap regret implies vanishing external regret, but not the other way around. Note though that for k = 2 actions, swap regret and external regret coincide as concepts (the only non-trivial swap is the transposition 1 ↔ 2, which is always dominated by one of the two constant swaps). So in this demo, the green and purple curves are measuring conceptually equivalent quantities — what differs is the algorithm computing them. To see swap and external regret truly separate, you'd need k ≥ 3 actions.
-</p>
+
 
 <h2>Things to try</h2>
 <p>
