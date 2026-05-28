@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>External vs Swap Regret: EW vs SDA</title>
+<meta name="description" content="Interactive demo comparing Exponential Weights (external regret) and the Stationary Delegation Algorithm (swap regret) on a 2-action online learning problem.">
+<style>
+  :root {
+    --bg: #fafaf7;
+    --surface: #ffffff;
+    --surface-2: #f1efe8;
+    --border: rgba(0,0,0,0.12);
+    --border-strong: rgba(0,0,0,0.25);
+    --text: #1a1a1a;
+    --text-secondary: #555;
+    --text-tertiary: #888;
+    --purple: #534AB7;
+    --purple-light: #AFA9EC;
+    --teal: #0F6E56;
+    --teal-light: #5DCAA5;
+    --amber: #BA7517;
+    --coral: #D85A30;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a;
+      --surface: #242424;
+      --surface-2: #2e2e2c;
+      --border: rgba(255,255,255,0.12);
+      --border-strong: rgba(255,255,255,0.25);
+      --text: #f0f0f0;
+      --text-secondary: #b0b0b0;
+      --text-tertiary: #888;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1rem 4rem;
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 24px;
+    font-weight: 500;
+    margin: 0 0 0.5rem;
+  }
+  .lede {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin: 0 0 2rem;
+  }
+  h2 {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 2rem 0 0.75rem;
+  }
+  p {
+    margin: 0 0 1rem;
+    font-size: 15px;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+  }
+  .main-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 1rem;
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+  .square-col {
+    flex: 0 0 auto;
+  }
+  .info-col {
+    flex: 1;
+    min-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  canvas#payoff-square {
+    border: 0.5px solid var(--border-strong);
+    border-radius: 8px;
+    cursor: crosshair;
+    display: block;
+    background: var(--surface);
+    max-width: 100%;
+    height: auto;
+  }
+  .square-caption {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .square-last {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    font-family: var(--font-mono);
+  }
+  .square-legend {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .legend-swatch {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+  .algo-card {
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .algo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .algo-title {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .algo-regret {
+    font-size: 13px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+  }
+  .prob-bar {
+    display: flex;
+    gap: 4px;
+    height: 22px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 0.5px solid var(--border);
+  }
+  .prob-bar > div { transition: width 0.25s; }
+  .prob-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  .sda-detail {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-tertiary);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .controls-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  button {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 0.5px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: var(--surface-2); }
+  button:active { transform: scale(0.98); }
+  .round-display {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .round-display span { font-family: var(--font-mono); }
+  .rate-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .rate-control input[type=range] {
+    width: 120px;
+  }
+  .rate-control .rate-value {
+    font-family: var(--font-mono);
+    color: var(--text);
+    min-width: 32px;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 220px;
+    margin-bottom: 0.5rem;
+  }
+  .chart-legend {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 0.5px solid var(--border);
+    font-size: 13px;
+    color: var(--text-tertiary);
+  }
+  .footer a { color: var(--text-secondary); }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>External vs swap regret: EW vs SDA</h1>
+<p class="lede">
+  Click anywhere in the square to set the round's payoff vector u = (u₁, u₂). Two algorithms are running in the background: Exponential Weights (external regret) and the Stationary Delegation Algorithm (swap regret). Watch how their action distributions and regrets respond.
+</p>
+
+<h2 class="sr-only">Interactive demo</h2>
+
+<div class="main-row">
+  <div class="square-col">
+    <div class="square-caption">Click to set this round's payoff u = (u₁, u₂)</div>
+    <canvas id="payoff-square" width="320" height="320"></canvas>
+    <div id="last-u" class="square-last">no rounds yet</div>
+    <div class="square-legend">
+      <span class="legend-swatch" style="background:#534AB7;"></span>EW probability of action 1 / 2 along bottom / left edge<br>
+      <span class="legend-swatch" style="background:#0F6E56;"></span>SDA probability of action 1 / 2 along top / right edge
+    </div>
+  </div>
+
+  <div class="info-col">
+    <div class="algo-card">
+      <div class="algo-header">
+        <span class="algo-title" style="color:#534AB7;">EW (external regret)</span>
+        <span id="ew-regret" class="algo-regret">regret: —</span>
+      </div>
+      <div class="prob-bar">
+        <div id="ew-bar-1" style="background:#534AB7; width:50%;"></div>
+        <div id="ew-bar-2" style="background:#AFA9EC; width:50%;"></div>
+      </div>
+      <div class="prob-labels">
+        <span id="ew-p1">α₁ = 0.50</span>
+        <span id="ew-p2">α₂ = 0.50</span>
+      </div>
+    </div>
+
+    <div class="algo-card">
+      <div class="algo-header">
+        <span class="algo-title" style="color:#0F6E56;">SDA (swap regret)</span>
+        <span id="sda-regret" class="algo-regret">swap regret: —</span>
+      </div>
+      <div class="prob-bar">
+        <div id="sda-bar-1" style="background:#0F6E56; width:50%;"></div>
+        <div id="sda-bar-2" style="background:#5DCAA5; width:50%;"></div>
+      </div>
+      <div class="prob-labels">
+        <span id="sda-p1">α₁ = 0.50</span>
+        <span id="sda-p2">α₂ = 0.50</span>
+      </div>
+      <div id="sda-detail" class="sda-detail"></div>
+    </div>
+  </div>
+</div>
+
+<div class="controls-row">
+  <button id="reset-btn">Reset</button>
+  <span class="round-display">Round <span id="round-num">0</span></span>
+  <div class="rate-control">
+    <label for="rate-slider">Learning rate ε</label>
+    <input type="range" id="rate-slider" min="0.05" max="1.0" step="0.05" value="0.30">
+    <span class="rate-value" id="rate-value">0.30</span>
+  </div>
+</div>
+
+<div class="chart-wrap">
+  <canvas id="regret-chart"></canvas>
+</div>
+<div class="chart-legend">
+  <span><span class="legend-swatch" style="background:#534AB7;"></span>EW external regret</span>
+  <span><span class="legend-swatch" style="background:#0F6E56;"></span>SDA swap regret</span>
+  <span><span class="legend-swatch" style="background:#BA7517;"></span>SDA external regret</span>
+</div>
+
+<h2>What's going on</h2>
+<p>
+  Both algorithms face the same stream of payoff vectors u¹, u², ... that you generate by clicking. In each round, each algorithm commits to a distribution over the two actions <em>before</em> seeing u, then observes the full payoff vector.
+</p>
+<p>
+  <strong style="font-weight:500;">EW (Exponential Weights)</strong> keeps cumulative payoffs per action and plays each action with probability proportional to (1+ε) raised to its cumulative payoff. It guarantees vanishing <em>external</em> regret: no single fixed action would have done much better in hindsight.
+</p>
+<p>
+  <strong style="font-weight:500;">SDA (Stationary Delegation Algorithm)</strong> runs k internal EW experts, one per action. Each round, expert a recommends a distribution α̃ₐ. SDA stacks these as rows of a row-stochastic matrix and plays the stationary distribution α of that matrix, satisfying α = α·Ã. Expert a then receives the scaled payoff vector αₐ·u. This guarantees vanishing <em>swap</em> regret: no rerouting a → f(a) of your own actions would have done much better.
+</p>
+<p>
+  Swap regret is strictly stronger than external regret. The orange dashed line shows SDA's external regret, which is bounded by its swap regret — so it also vanishes, just often more slowly than pure EW because each SDA expert only updates on its own weighted slice of history.
+</p>
+
+<h2>Things to try</h2>
+<p>
+  <em>Stationary adversary:</em> click repeatedly near (0.8, 0.2). Both algorithms converge to "play action 1" and regrets stay near zero.
+</p>
+<p>
+  <em>Phase change:</em> click (1, 0) many times, then switch to (0, 1) many times. Watch how quickly each algorithm adapts.
+</p>
+<p>
+  <em>Alternating payoffs:</em> alternate between (1, 0) and (0, 1). Look at how the two SDA experts develop different views of history (shown in the detail line under SDA's bars).
+</p>
+<p>
+  <em>Learning rate sweep:</em> set ε to 0.05 (very cautious) or 1.0 (very aggressive) and replay the same sequence. Large ε learns faster but reacts more to noise; small ε is the opposite.
+</p>
+
+<div class="footer">
+  Companion to Hartline's review article <em>The Economics of No-Regret Learning Algorithms</em> (Section 4). The SDA construction is from Blum and Mansour (2007).
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  let EPSILON = 0.30;
+
+  // Algorithm state
+  let ewU = [0, 0];
+  let sdaExpertU = [[0, 0], [0, 0]];
+  let payoffs = [];
+  let ewProbs = [];
+  let sdaProbs = [];
+  let history = { rounds: [], ewExt: [], sdaSwap: [], sdaExt: [] };
+
+  function softmax(U) {
+    // Numerically stable: shift by max
+    const m = Math.max(U[0], U[1]);
+    const w0 = Math.pow(1 + EPSILON, U[0] - m);
+    const w1 = Math.pow(1 + EPSILON, U[1] - m);
+    const s = w0 + w1;
+    return [w0/s, w1/s];
+  }
+
+  function sdaDistribution() {
+    const exp1 = softmax(sdaExpertU[0]);
+    const exp2 = softmax(sdaExpertU[1]);
+    const p = exp1[0];
+    const q = exp2[0];
+    const denom = q + (1 - p);
+    let alpha;
+    if (denom < 1e-9) alpha = [0.5, 0.5];
+    else alpha = [q / denom, (1 - p) / denom];
+    return { alpha, exp1, exp2 };
+  }
+
+  function ewDistribution() { return softmax(ewU); }
+
+  function externalRegret(probs, payoffs) {
+    const n = payoffs.length;
+    if (n === 0) return 0;
+    let cumU = [0, 0], algPayoff = 0;
+    for (let i = 0; i < n; i++) {
+      cumU[0] += payoffs[i][0];
+      cumU[1] += payoffs[i][1];
+      algPayoff += probs[i][0] * payoffs[i][0] + probs[i][1] * payoffs[i][1];
+    }
+    return (Math.max(cumU[0], cumU[1]) - algPayoff) / n;
+  }
+
+  function swapRegret(probs, payoffs) {
+    const n = payoffs.length;
+    if (n === 0) return 0;
+    let algPayoff = 0;
+    let weighted = [[0, 0], [0, 0]];
+    for (let i = 0; i < n; i++) {
+      algPayoff += probs[i][0] * payoffs[i][0] + probs[i][1] * payoffs[i][1];
+      for (let a = 0; a < 2; a++) {
+        weighted[a][0] += probs[i][a] * payoffs[i][0];
+        weighted[a][1] += probs[i][a] * payoffs[i][1];
+      }
+    }
+    const benchmark = Math.max(weighted[0][0], weighted[0][1]) +
+                      Math.max(weighted[1][0], weighted[1][1]);
+    return (benchmark - algPayoff) / n;
+  }
+
+  // Recompute everything when epsilon changes, replaying the same payoff history
+  function recomputeFromHistory() {
+    const savedPayoffs = payoffs.slice();
+    ewU = [0, 0];
+    sdaExpertU = [[0, 0], [0, 0]];
+    payoffs = [];
+    ewProbs = [];
+    sdaProbs = [];
+    history = { rounds: [], ewExt: [], sdaSwap: [], sdaExt: [] };
+    for (const u of savedPayoffs) {
+      const ewAlpha = ewDistribution();
+      const sda = sdaDistribution();
+      payoffs.push(u);
+      ewProbs.push(ewAlpha);
+      sdaProbs.push(sda.alpha);
+      ewU[0] += u[0]; ewU[1] += u[1];
+      for (let a = 0; a < 2; a++) {
+        sdaExpertU[a][0] += sda.alpha[a] * u[0];
+        sdaExpertU[a][1] += sda.alpha[a] * u[1];
+      }
+      const n = payoffs.length;
+      history.rounds.push(n);
+      history.ewExt.push(externalRegret(ewProbs, payoffs));
+      history.sdaSwap.push(swapRegret(sdaProbs, payoffs));
+      history.sdaExt.push(externalRegret(sdaProbs, payoffs));
+    }
+  }
+
+  // Canvas setup
+  const canvas = document.getElementById('payoff-square');
+  const ctx = canvas.getContext('2d');
+  const PAD = 28;
+  const W = canvas.width, H = canvas.height;
+  const SX = W - 2*PAD, SY = H - 2*PAD;
+
+  function px(u1) { return PAD + u1 * SX; }
+  function py(u2) { return PAD + (1 - u2) * SY; }
+
+  function readVar(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  function drawSquare(lastPoint) {
+    ctx.clearRect(0, 0, W, H);
+
+    const ewAlpha = ewDistribution();
+    const sda = sdaDistribution();
+    const barT = 8;
+
+    // EW action 1 — bottom edge
+    ctx.fillStyle = 'rgba(83, 74, 183, 0.15)';
+    ctx.fillRect(PAD, H - PAD + 4, SX, barT);
+    ctx.fillStyle = '#534AB7';
+    ctx.fillRect(PAD, H - PAD + 4, SX * ewAlpha[0], barT);
+
+    // EW action 2 — left edge
+    ctx.fillStyle = 'rgba(83, 74, 183, 0.15)';
+    ctx.fillRect(PAD - 4 - barT, PAD, barT, SY);
+    ctx.fillStyle = '#534AB7';
+    ctx.fillRect(PAD - 4 - barT, PAD + SY * (1 - ewAlpha[1]), barT, SY * ewAlpha[1]);
+
+    // SDA action 1 — top edge
+    ctx.fillStyle = 'rgba(15, 110, 86, 0.15)';
+    ctx.fillRect(PAD, PAD - 4 - barT, SX, barT);
+    ctx.fillStyle = '#0F6E56';
+    ctx.fillRect(PAD, PAD - 4 - barT, SX * sda.alpha[0], barT);
+
+    // SDA action 2 — right edge
+    ctx.fillStyle = 'rgba(15, 110, 86, 0.15)';
+    ctx.fillRect(W - PAD + 4, PAD, barT, SY);
+    ctx.fillStyle = '#0F6E56';
+    ctx.fillRect(W - PAD + 4, PAD + SY * (1 - sda.alpha[1]), barT, SY * sda.alpha[1]);
+
+    // Inner grid
+    const gridColor = window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+    ctx.strokeStyle = gridColor;
+    ctx.lineWidth = 1;
+    for (let i = 1; i < 4; i++) {
+      ctx.beginPath();
+      ctx.moveTo(PAD + (SX/4)*i, PAD);
+      ctx.lineTo(PAD + (SX/4)*i, H - PAD);
+      ctx.moveTo(PAD, PAD + (SY/4)*i);
+      ctx.lineTo(W - PAD, PAD + (SY/4)*i);
+      ctx.stroke();
+    }
+    // Boundary
+    ctx.strokeStyle = window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(PAD, PAD, SX, SY);
+
+    // Diagonal
+    ctx.strokeStyle = window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(PAD, H - PAD);
+    ctx.lineTo(W - PAD, PAD);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Past payoffs
+    for (let i = 0; i < payoffs.length; i++) {
+      const u = payoffs[i];
+      const age = (payoffs.length - i) / Math.max(payoffs.length, 1);
+      const alpha = 0.15 + 0.35 * (1 - age);
+      ctx.fillStyle = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? `rgba(200,200,200,${alpha})` : `rgba(80,80,80,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(px(u[0]), py(u[1]), 3, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // Latest
+    if (lastPoint) {
+      ctx.fillStyle = '#D85A30';
+      ctx.beginPath();
+      ctx.arc(px(lastPoint[0]), py(lastPoint[1]), 6, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = window.matchMedia('(prefers-color-scheme: dark)').matches ? '#1a1a1a' : 'white';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Labels
+    const labelColor = window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'rgba(220,220,220,0.7)' : 'rgba(80,80,80,0.7)';
+    ctx.fillStyle = labelColor;
+    ctx.font = '10px sans-serif';
+    ctx.fillText('(0,0)', PAD + 2, H - PAD - 3);
+    ctx.fillText('(1,1)', W - PAD - 28, PAD + 10);
+    ctx.fillText('(1,0)', W - PAD - 28, H - PAD - 3);
+    ctx.fillText('(0,1)', PAD + 2, PAD + 10);
+  }
+
+  // Chart
+  const chartCtx = document.getElementById('regret-chart').getContext('2d');
+  const chart = new Chart(chartCtx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        { label: 'EW external regret', data: [], borderColor: '#534AB7', backgroundColor: '#534AB7', tension: 0.15, pointRadius: 2, borderWidth: 2 },
+        { label: 'SDA swap regret', data: [], borderColor: '#0F6E56', backgroundColor: '#0F6E56', tension: 0.15, pointRadius: 2, borderWidth: 2 },
+        { label: 'SDA external regret', data: [], borderColor: '#BA7517', backgroundColor: '#BA7517', tension: 0.15, pointRadius: 2, borderWidth: 2, borderDash: [4, 3] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 200 },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'Round', font: { size: 11 } }, ticks: { font: { size: 10 } } },
+        y: { title: { display: true, text: 'Per-round regret', font: { size: 11 } }, ticks: { font: { size: 10 } }, beginAtZero: true }
+      }
+    }
+  });
+
+  function updateUI() {
+    const ewAlpha = ewDistribution();
+    const sda = sdaDistribution();
+    const n = payoffs.length;
+
+    document.getElementById('ew-bar-1').style.width = (ewAlpha[0] * 100).toFixed(1) + '%';
+    document.getElementById('ew-bar-2').style.width = (ewAlpha[1] * 100).toFixed(1) + '%';
+    document.getElementById('ew-p1').textContent = 'α₁ = ' + ewAlpha[0].toFixed(2);
+    document.getElementById('ew-p2').textContent = 'α₂ = ' + ewAlpha[1].toFixed(2);
+
+    document.getElementById('sda-bar-1').style.width = (sda.alpha[0] * 100).toFixed(1) + '%';
+    document.getElementById('sda-bar-2').style.width = (sda.alpha[1] * 100).toFixed(1) + '%';
+    document.getElementById('sda-p1').textContent = 'α₁ = ' + sda.alpha[0].toFixed(2);
+    document.getElementById('sda-p2').textContent = 'α₂ = ' + sda.alpha[1].toFixed(2);
+    document.getElementById('sda-detail').innerHTML =
+      'Expert 1 says: (' + sda.exp1[0].toFixed(2) + ', ' + sda.exp1[1].toFixed(2) + ')<br>' +
+      'Expert 2 says: (' + sda.exp2[0].toFixed(2) + ', ' + sda.exp2[1].toFixed(2) + ')';
+
+    document.getElementById('round-num').textContent = n;
+
+    if (n > 0) {
+      document.getElementById('ew-regret').textContent = 'ext regret: ' + externalRegret(ewProbs, payoffs).toFixed(3);
+      document.getElementById('sda-regret').textContent = 'swap regret: ' + swapRegret(sdaProbs, payoffs).toFixed(3);
+      const lastU = payoffs[n-1];
+      document.getElementById('last-u').textContent = 'last u = (' + lastU[0].toFixed(2) + ', ' + lastU[1].toFixed(2) + ')';
+    } else {
+      document.getElementById('ew-regret').textContent = 'ext regret: —';
+      document.getElementById('sda-regret').textContent = 'swap regret: —';
+      document.getElementById('last-u').textContent = 'no rounds yet';
+    }
+  }
+
+  function updateChart() {
+    chart.data.labels = history.rounds;
+    chart.data.datasets[0].data = history.ewExt;
+    chart.data.datasets[1].data = history.sdaSwap;
+    chart.data.datasets[2].data = history.sdaExt;
+    chart.update('none');
+  }
+
+  function processClick(u1, u2) {
+    const u = [u1, u2];
+    const ewAlpha = ewDistribution();
+    const sda = sdaDistribution();
+    payoffs.push(u);
+    ewProbs.push(ewAlpha);
+    sdaProbs.push(sda.alpha);
+    ewU[0] += u[0]; ewU[1] += u[1];
+    for (let a = 0; a < 2; a++) {
+      sdaExpertU[a][0] += sda.alpha[a] * u[0];
+      sdaExpertU[a][1] += sda.alpha[a] * u[1];
+    }
+    const n = payoffs.length;
+    history.rounds.push(n);
+    history.ewExt.push(externalRegret(ewProbs, payoffs));
+    history.sdaSwap.push(swapRegret(sdaProbs, payoffs));
+    history.sdaExt.push(externalRegret(sdaProbs, payoffs));
+    drawSquare(u);
+    updateUI();
+    updateChart();
+  }
+
+  canvas.addEventListener('click', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = (e.clientX - rect.left) * (W / rect.width);
+    const cy = (e.clientY - rect.top) * (H / rect.height);
+    const u1 = (cx - PAD) / SX;
+    const u2 = 1 - (cy - PAD) / SY;
+    if (u1 < 0 || u1 > 1 || u2 < 0 || u2 > 1) return;
+    processClick(Math.max(0, Math.min(1, u1)), Math.max(0, Math.min(1, u2)));
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', function() {
+    ewU = [0, 0];
+    sdaExpertU = [[0, 0], [0, 0]];
+    payoffs = []; ewProbs = []; sdaProbs = [];
+    history = { rounds: [], ewExt: [], sdaSwap: [], sdaExt: [] };
+    drawSquare(null);
+    updateUI();
+    updateChart();
+  });
+
+  const slider = document.getElementById('rate-slider');
+  const rateValue = document.getElementById('rate-value');
+  slider.addEventListener('input', function() {
+    EPSILON = parseFloat(this.value);
+    rateValue.textContent = EPSILON.toFixed(2);
+    // Replay all history with the new epsilon so the curves reflect the new rate
+    recomputeFromHistory();
+    drawSquare(payoffs.length > 0 ? payoffs[payoffs.length-1] : null);
+    updateUI();
+    updateChart();
+  });
+
+  // React to color scheme changes
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+      drawSquare(payoffs.length > 0 ? payoffs[payoffs.length-1] : null);
+    });
+  }
+
+  drawSquare(null);
+  updateUI();
+})();
+</script>
+</body>
+</html>
