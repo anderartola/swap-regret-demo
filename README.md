@@ -28,33 +28,11 @@ Two preset adversaries are provided to make the separation easy to see:
 
 A learning rate slider replays the entire history through both algorithms with the new ε, so you can see immediately how that hyperparameter affects both regrets.
 
-## Running locally
 
-It's a single HTML file with no build step:
+## Link
 
-```bash
-# Option 1: open directly
-open index.html  # macOS
-xdg-open index.html  # Linux
+You can try the demo [here](https://anderartola.github.io/swap-regret-demo/).
 
-# Option 2: serve it (recommended)
-python3 -m http.server 8000
-# then visit http://localhost:8000
-```
-
-## Online access
-
-You can try the demo [here](https://anderartola.github.io/swap-regret-demo/)
-
-## File structure
-
-```
-.
-├── index.html      # Full app: HTML, CSS, JS
-├── README.md       # This file
-├── LICENSE         # MIT
-└── .gitignore
-```
 
 ## License
 
