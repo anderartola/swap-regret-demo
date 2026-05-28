@@ -42,22 +42,9 @@ python3 -m http.server 8000
 # then visit http://localhost:8000
 ```
 
-## Deploying to GitHub Pages
+## Online access
 
-1. Push these files to a public GitHub repository:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/<your-repo>.git
-   git push -u origin main
-   ```
-2. On GitHub, go to **Settings → Pages**.
-3. Under **Source**, choose **Deploy from a branch**, select `main` and `/ (root)`, and click **Save**.
-4. Within a minute or two, your site is live at `https://<your-username>.github.io/<your-repo>/`.
-
-No build step, no Actions, no Jekyll config. Chart.js loads from a CDN at runtime.
+You can try the demo [here](https://anderartola.github.io/swap-regret-demo/)
 
 ## File structure
 
