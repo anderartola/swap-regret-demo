@@ -313,7 +313,6 @@
 <div class="chart-legend">
   <span><span class="legend-swatch" style="background:#534AB7;"></span>EW external regret</span>
   <span><span class="legend-swatch" style="background:#0F6E56;"></span>SDA swap regret</span>
-  <span><span class="legend-swatch" style="background:#BA7517;"></span>SDA external regret</span>
 </div>
 
 <h2>What's going on</h2>
@@ -327,7 +326,7 @@
   <strong style="font-weight:500;">SDA (Stationary Delegation Algorithm)</strong> runs k internal EW experts, one per action. Each round, expert a recommends a distribution α̃ₐ. SDA stacks these as rows of a row-stochastic matrix and plays the stationary distribution α of that matrix, satisfying α = α·Ã. Expert a then receives the scaled payoff vector αₐ·u. This guarantees vanishing <em>swap</em> regret: no rerouting a → f(a) of your own actions would have done much better.
 </p>
 <p>
-  Swap regret is strictly stronger than external regret. The orange dashed line shows SDA's external regret, which is bounded by its swap regret — so it also vanishes, just often more slowly than pure EW because each SDA expert only updates on its own weighted slice of history.
+  Swap regret is strictly stronger than external regret in general — vanishing swap regret implies vanishing external regret, but not the other way around. Note though that for k = 2 actions, swap regret and external regret coincide as concepts (the only non-trivial swap is the transposition 1 ↔ 2, which is always dominated by one of the two constant swaps). So in this demo, the green and purple curves are measuring conceptually equivalent quantities — what differs is the algorithm computing them. To see swap and external regret truly separate, you'd need k ≥ 3 actions.
 </p>
 
 <h2>Things to try</h2>
@@ -361,7 +360,7 @@
   let payoffs = [];
   let ewProbs = [];
   let sdaProbs = [];
-  let history = { rounds: [], ewExt: [], sdaSwap: [], sdaExt: [] };
+  let history = { rounds: [], ewExt: [], sdaSwap: [] };
 
   function softmax(U) {
     // Numerically stable: shift by max
@@ -423,7 +422,7 @@
     payoffs = [];
     ewProbs = [];
     sdaProbs = [];
-    history = { rounds: [], ewExt: [], sdaSwap: [], sdaExt: [] };
+    history = { rounds: [], ewExt: [], sdaSwap: [] };
     for (const u of savedPayoffs) {
       const ewAlpha = ewDistribution();
       const sda = sdaDistribution();
@@ -439,7 +438,6 @@
       history.rounds.push(n);
       history.ewExt.push(externalRegret(ewProbs, payoffs));
       history.sdaSwap.push(swapRegret(sdaProbs, payoffs));
-      history.sdaExt.push(externalRegret(sdaProbs, payoffs));
     }
   }
 
@@ -560,8 +558,7 @@
       labels: [],
       datasets: [
         { label: 'EW external regret', data: [], borderColor: '#534AB7', backgroundColor: '#534AB7', tension: 0.15, pointRadius: 2, borderWidth: 2 },
-        { label: 'SDA swap regret', data: [], borderColor: '#0F6E56', backgroundColor: '#0F6E56', tension: 0.15, pointRadius: 2, borderWidth: 2 },
-        { label: 'SDA external regret', data: [], borderColor: '#BA7517', backgroundColor: '#BA7517', tension: 0.15, pointRadius: 2, borderWidth: 2, borderDash: [4, 3] }
+        { label: 'SDA swap regret', data: [], borderColor: '#0F6E56', backgroundColor: '#0F6E56', tension: 0.15, pointRadius: 2, borderWidth: 2 }
       ]
     },
     options: {
@@ -610,7 +607,6 @@
     chart.data.labels = history.rounds;
     chart.data.datasets[0].data = history.ewExt;
     chart.data.datasets[1].data = history.sdaSwap;
-    chart.data.datasets[2].data = history.sdaExt;
     chart.update('none');
   }
 
@@ -630,7 +626,6 @@
     history.rounds.push(n);
     history.ewExt.push(externalRegret(ewProbs, payoffs));
     history.sdaSwap.push(swapRegret(sdaProbs, payoffs));
-    history.sdaExt.push(externalRegret(sdaProbs, payoffs));
     drawSquare(u);
     updateUI();
     updateChart();
@@ -650,7 +645,7 @@
     ewU = [0, 0];
     sdaExpertU = [[0, 0], [0, 0]];
     payoffs = []; ewProbs = []; sdaProbs = [];
-    history = { rounds: [], ewExt: [], sdaSwap: [], sdaExt: [] };
+    history = { rounds: [], ewExt: [], sdaSwap: [] };
     drawSquare(null);
     updateUI();
     updateChart();
