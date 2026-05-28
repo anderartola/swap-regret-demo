@@ -1,39 +1,50 @@
-# External vs swap regret: an interactive demo
+# External vs swap regret: a 3-action interactive demo
 
-A single-page interactive comparison of two no-regret learning algorithms on a 2-action online learning problem:
+A single-page interactive comparison of two no-regret learning algorithms on a 3-action online learning problem:
 
 - **EW** — Exponential Weights, the classic external-regret minimizer.
 - **SDA** — Stationary Delegation Algorithm of Blum and Mansour (2007), which achieves swap regret by running k internal EW experts and playing the stationary distribution of their recommendations.
 
 Companion to Section 4 of Hartline's review article *The Economics of No-Regret Learning Algorithms* (arXiv:2601.22079).
 
+## Why 3 actions
+
+With k = 2 actions, swap regret and external regret coincide as concepts — the only non-trivial swap is the transposition, which always reduces to one of the constant swaps. To see the two regret notions genuinely separate, you need k ≥ 3. This demo uses k = 3 with input on the probability simplex (a triangle).
+
 ## What it does
 
-Click anywhere in the unit square to set the round's payoff vector u = (u₁, u₂). Both algorithms commit to a distribution *before* seeing u, then observe the full payoff vector. The display shows:
+Click anywhere inside the triangle to set the round's payoff u = (u₁, u₂, u₃). The click position determines the payoff via barycentric coordinates: corners give payoff 1 to that action and 0 to the others; the centroid gives (1/3, 1/3, 1/3); etc.
 
-- Each algorithm's current action distribution, both as horizontal bars next to the algorithm's name and as bars along the edges of the square.
-- The two SDA experts' individual recommendations (expert a is the internal EW that "owns" action a).
-- A running plot of EW's external regret, SDA's swap regret, and SDA's external regret over time.
-- A slider to adjust the learning rate ε. Changing ε replays the full payoff history through both algorithms with the new rate so you can see the effect immediately.
+The chart shows three regret curves:
+
+- **EW external regret** — what EW is designed to minimize.
+- **EW swap regret** — the same play sequence judged by the stronger swap benchmark. The gap between this and EW external regret is what swap regret penalizes that external regret ignores.
+- **SDA swap regret** — SDA's behavior under the stronger benchmark.
+
+Two preset adversaries are provided to make the separation easy to see:
+
+- **Cycle through corners (10×)** — 10 rounds at (1,0,0), then 10 at (0,1,0), then 10 at (0,0,1). After 30 rounds all three cumulative payoffs are equal, so external regret is near zero. But swap regret is large because EW chased the leader and was concentrated on the wrong action at every transition.
+- **Rock-paper-scissors (10×)** — cycles through (1, 0, ½), (½, 1, 0), (0, ½, 1) (normalized to sum to 1).
+
+A learning rate slider replays the entire history through both algorithms with the new ε, so you can see immediately how that hyperparameter affects both regrets.
 
 ## Running locally
 
-It's a single HTML file with no build step. Just open it:
+It's a single HTML file with no build step:
 
 ```bash
 # Option 1: open directly
 open index.html  # macOS
 xdg-open index.html  # Linux
 
-# Option 2: serve it (recommended; some browsers restrict file:// for canvas)
+# Option 2: serve it (recommended)
 python3 -m http.server 8000
 # then visit http://localhost:8000
 ```
 
 ## Deploying to GitHub Pages
 
-1. Create a new GitHub repository (public if you want free Pages hosting).
-2. Push these files to the `main` branch:
+1. Push these files to a public GitHub repository:
    ```bash
    git init
    git add .
@@ -42,28 +53,22 @@ python3 -m http.server 8000
    git remote add origin https://github.com/<your-username>/<your-repo>.git
    git push -u origin main
    ```
-3. On GitHub, go to your repo's **Settings → Pages**.
-4. Under **Source**, select **Deploy from a branch**, choose `main` and `/ (root)`, then click **Save**.
-5. Wait a minute or two. Your site will be live at `https://<your-username>.github.io/<your-repo>/`.
+2. On GitHub, go to **Settings → Pages**.
+3. Under **Source**, choose **Deploy from a branch**, select `main` and `/ (root)`, and click **Save**.
+4. Within a minute or two, your site is live at `https://<your-username>.github.io/<your-repo>/`.
 
-That's it — no Jekyll config, no build action, no dependencies to install. The page loads Chart.js from a CDN at runtime.
+No build step, no Actions, no Jekyll config. Chart.js loads from a CDN at runtime.
 
 ## File structure
 
 ```
 .
-├── index.html      # The entire app: HTML, CSS, JS
-└── README.md       # This file
+├── index.html      # Full app: HTML, CSS, JS
+├── README.md       # This file
+├── LICENSE         # MIT
+└── .gitignore
 ```
-
-## Customizing
-
-The full app is in `index.html`. Two things you might want to change:
-
-- **Number of actions.** Currently hardcoded to k = 2 because that lets the action distribution display naturally along the edges of a 2D payoff square. Generalizing to k > 2 would require a different visualization for both the payoff input (the unit square only works for k = 2) and the action distributions.
-- **Learning rate range.** The slider in the controls row is set to `min="0.05" max="1.0" step="0.05"`. Adjust those attributes to widen or narrow the range.
-- **Color scheme.** All colors are defined as CSS variables at the top of the `<style>` block, with a `prefers-color-scheme: dark` block for automatic dark mode.
 
 ## License
 
-MIT. Do what you want with it.
+MIT.
